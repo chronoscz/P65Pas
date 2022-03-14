@@ -47,6 +47,7 @@ parts:
       install -m 755 Install/snap/local/P65Pas.desktop $SNAPCRAFT_PART_INSTALL/usr/share/applications
       install -d -m 755 $SNAPCRAFT_PART_INSTALL/usr/share/pixmaps
       install -m 644 Install/snap/local/P65Pas.png $SNAPCRAFT_PART_INSTALL/usr/share/pixmaps
+      install -d -m 755 $SNAPCRAFT_PART_INSTALL/usr/share/P65Pas
       cp -r syntax $SNAPCRAFT_PART_INSTALL/usr/share/P65Pas
       cp -r units $SNAPCRAFT_PART_INSTALL/usr/share/P65Pas
       cp -r samples $SNAPCRAFT_PART_INSTALL/usr/share/P65Pas
