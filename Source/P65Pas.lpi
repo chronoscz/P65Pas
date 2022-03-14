@@ -11,6 +11,9 @@
       <Title Value="P65Pas"/>
       <ResourceType Value="res"/>
       <UseXPManifest Value="True"/>
+      <XPManifest>
+        <DpiAware Value="True"/>
+      </XPManifest>
       <Icon Value="0"/>
     </General>
     <i18n>
@@ -65,6 +68,7 @@
     <RequiredPackages Count="4">
       <Item1>
         <PackageName Value="etpackage"/>
+        <DefaultFilename Value="Packages\epiktimer\etpackage.lpk" Prefer="True"/>
       </Item1>
       <Item2>
         <PackageName Value="LazControls"/>

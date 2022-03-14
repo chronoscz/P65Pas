@@ -4,7 +4,7 @@ Unidad con declaraciones globales del proyecto
 unit Globales;
 {$mode objfpc}{$H+}
 interface
-uses  Classes, SysUtils, Forms, SynEdit, SynEditKeyCmds, MisUtils,
+uses  Classes, SysUtils, Forms, SynEdit, SynEditKeyCmds, MisUtils, MiConfigXML,
       lclType, FileUtil, LazLogger, Menus, EpikTimer ;
 
 const
@@ -178,15 +178,79 @@ begin
    //todos los nombres estaban ocupados. Sale con el mismo nombre
 End;
 
+const
+  UnixDataDir = '/usr/share/P65Pas/';
+  UnixLanguageDir = UnixDataDir + 'language';
+
+function IsInstalledInUnix: Boolean;
+begin
+  Result := DirectoryExists(UnixDataDir);
+end;
+
+function GetDataDir: string;
+begin
+  Result := ExtractFilePath(Application.ExeName);
+  {$IFDEF UNIX}
+  // If installed in Unix system then use installation shared game directory for data files
+  if IsInstalledInUnix then Result := UnixDataDir;
+  {$ENDIF}
+end;
+
+procedure MakeFileWriteable(FileName: string);
+begin
+  if FileIsReadOnly(FileName) then
+    FileSetAttr(FileName, FileGetAttr(FileName) xor faReadOnly);
+end;
+
+procedure MakeFilesWriteable(Dir: string);
+var
+  I: Integer;
+  Files: TStringList;
+begin
+  Files := FindAllFiles(Dir, '*', True);
+  try
+    for I := 0 to Files.Count - 1 do
+      if FileExists(Files[I]) then MakeFileWriteable(Files[I]);
+  finally
+    Files.Free;
+  end;
+end;
+
 initialization
   //inicia directorios de la aplicación
-  patApp      :=  ExtractFilePath(Application.ExeName);  //incluye el '\' final
+  patApp      := GetDataDir;  //incluye el '\' final
   patSamples  := patApp + 'samples';
   patUnits    := patApp + 'units';
   patTemp     := patApp + 'temp';
   patSyntax   := patApp + 'syntax';
   patThemes   := patApp + 'themes';
   patDevices16 := patApp + 'devices65';
+  {$IFDEF UNIX}
+  if IsInstalledInUnix then begin
+    cfgFile.Free;
+    cfgFile := TMiConfigXML.Create(GetAppConfigDir(False) +
+      ChangeFileExt(ExtractFileName(Application.ExeName), '.xml'));
+    ForceDirectories(ExtractFileDir(cfgFile.ReadFileName));
+    // Copy initial default config file if it doesn't exist
+    CopyFile(patApp + ChangeFileExt(ExtractFileName(Application.ExeName), '.xml'),
+      cfgFile.ReadFileName, []);
+    MakeFileWriteable(cfgFile.ReadFileName);
+
+    // Relocate temp into user area
+    patTemp := GetAppConfigDir(False) + 'temp';
+    ForceDirectories(patTemp);
+
+    // Make initial copy of syntax files to be writeable by config dialog
+    patSyntax := GetAppConfigDir(False) + 'syntax';
+    CopyDirTree(UnixDataDir + 'syntax', patSyntax, [cffCreateDestDirectory]);
+    MakeFilesWriteable(patSyntax);
+
+    // Make initial copy of samples files to be writeable and allow to create .hex file
+    patSamples := GetAppConfigDir(False) + 'samples';
+    CopyDirTree(UnixDataDir + 'samples', patSamples, [cffCreateDestDirectory]);
+    MakeFilesWriteable(patSamples);
+  end;
+  {$ENDIF}
   archivoEnt  := '';    //archivo de entrada
   //verifica existencia de carpetas de trabajo
   try

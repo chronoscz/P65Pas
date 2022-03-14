@@ -93,12 +93,13 @@ type
 implementation
 {$R *.lfm}
 const
-  ROW_HEIGH = 19;
   //Constantes para identificar íconos
   ICO_INF = '0';
   ICO_WAR = '1';
   ICO_ERR = '2';
 var
+  ROW_HEIGH: Integer = 19;
+
   //Variables para índice de columnas
   GCOL_ICO: integer;  //ícono
   GCOL_TXT: integer;  //texto a mostrar en la grilla
@@ -505,6 +506,8 @@ constructor TfraMessagesWin.Create(AOwner: TComponent);
 var
   enc: TugGrillaCol;
 begin
+  ROW_HEIGH := ScaleY(19, 96);
+
   inherited Create(AOwner);
   //Configura Grilla de mensajes
   UtilGrilla:= TUtilGrillaFil2.Create(grilla);
@@ -543,6 +546,7 @@ begin
   UtilGrilla.Destroy;
   inherited Destroy;
 end;
+
 
 end.
 

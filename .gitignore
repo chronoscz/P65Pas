@@ -1,0 +1,6 @@
+P65Pas-linux
+P65Pas-linux.dbg
+Source/P65Pas.lps
+Source/P65Pas.res
+Source/lib/
+samples/*.hex

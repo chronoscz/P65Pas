@@ -1,0 +1,131 @@
+name: p65pas
+title: P65Pas
+version: '0.9.0'
+summary: Cross-platform Pascal cross-compiler for 6502 CPU.
+description: |
+  P65Pas is a Pascal compiler and IDE, which generates binary and ASM code for the 6502 CPU. 
+  No additional libraries or software required to compile. P65Pas generates the *.prg file directly. Additionally a BASIC Commodore program (POKE's) can be generated to charge the machine code.
+  P65Pas works with a simplified version of the Pascal language, that has been adapted to work with limited resources small devices.
+  Currently, it only supports basic types.
+  It includes a complete IDE/debugger/simulator to facilitate the development.
+  The P65Pas compiler includes optimization options so the code obtained is generally compact.
+confinement: strict
+base: core20
+grade: stable
+icon: "Install/snap/local/P65Pas.png"
+license: NLPL
+
+parts:
+  lazarus:
+    plugin: nil
+    source: .
+    source-type: local
+    build-packages: 
+    - wget
+    - libgtk2.0-dev
+    override-build: |
+      wget -nc https://deac-ams.dl.sourceforge.net/project/lazarus/Lazarus%20Linux%20amd64%20DEB/Lazarus%202.2.0/lazarus-project_2.2.0-0_amd64.deb
+      wget -nc https://netix.dl.sourceforge.net/project/lazarus/Lazarus%20Linux%20amd64%20DEB/Lazarus%202.2.0/fpc-laz_3.2.2-210709_amd64.deb
+      wget -nc https://netix.dl.sourceforge.net/project/lazarus/Lazarus%20Linux%20amd64%20DEB/Lazarus%202.2.0/fpc-src_3.2.2-210709_amd64.deb
+      apt install ./lazarus-project_2.2.0-0_amd64.deb ./fpc-laz_3.2.2-210709_amd64.deb ./fpc-src_3.2.2-210709_amd64.deb
+    prime: [-*]
+  p65pas:
+    plugin: nil
+    source: .
+    source-type: local
+    build-packages: 
+    - fpc
+    - lazarus
+    - lcl
+    - lcl-utils
+    override-build: |
+      snapcraftctl build
+      lazbuild --build-mode=Release Source/P65Pas.lpi
+      install -d -m 755 $SNAPCRAFT_PART_INSTALL/usr/bin
+      install -s -m 755 P65Pas-linux $SNAPCRAFT_PART_INSTALL/usr/bin
+      install -d -m 755 $SNAPCRAFT_PART_INSTALL/usr/share/applications
+      install -m 755 Install/snap/local/P65Pas.desktop $SNAPCRAFT_PART_INSTALL/usr/share/applications
+      install -d -m 755 $SNAPCRAFT_PART_INSTALL/usr/share/pixmaps
+      install -m 644 Install/snap/local/P65Pas.png $SNAPCRAFT_PART_INSTALL/usr/share/pixmaps
+      cp -r syntax $SNAPCRAFT_PART_INSTALL/usr/share/P65Pas
+      cp -r units $SNAPCRAFT_PART_INSTALL/usr/share/P65Pas
+      cp -r samples $SNAPCRAFT_PART_INSTALL/usr/share/P65Pas
+      cp -r devices65 $SNAPCRAFT_PART_INSTALL/usr/share/P65Pas
+      cp -r themes $SNAPCRAFT_PART_INSTALL/usr/share/P65Pas
+      install -m 644 Install/snap/local/P65Pas-linux.xml $SNAPCRAFT_PART_INSTALL/usr/share/P65Pas
+    after:
+    - lazarus
+    - desktop-gtk2
+    stage:
+    - usr
+    - usr/bin
+    - usr/share/P65Pas
+    - usr/share/applications/P65Pas.desktop
+    - usr/share/pixmaps
+    stage-packages:
+    - libgtk2.0-0
+    
+  desktop-gtk2:
+    source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
+    source-subdir: gtk
+    plugin: make
+    make-parameters: ["FLAVOR=gtk2"]
+    build-packages:
+    - build-essential
+    - libgtk2.0-dev
+    stage-packages:
+    - libxkbcommon0  # XKB_CONFIG_ROOT
+    - ttf-ubuntu-font-family
+    - dmz-cursor-theme
+    - light-themes
+    - adwaita-icon-theme
+    - gnome-themes-standard
+    - shared-mime-info
+    - libgtk2.0-0
+    - libgdk-pixbuf2.0-0
+    - libglib2.0-bin
+    - libgtk2.0-bin
+    - unity-gtk2-module
+    - locales-all
+    - libappindicator1
+    - xdg-user-dirs
+    - ibus-gtk
+    - libibus-1.0-5
+      
+# Additional plugs to pick up the GTK theme and icons from the system
+plugs: 
+  icon-themes:
+    interface: content
+    target: $SNAP/data-dir/icons
+    default-provider: gtk-common-themes
+  sound-themes:
+    interface: content
+    target: $SNAP/data-dir/sounds
+    default-provider: gtk-common-themes
+  gtk-2-engines:
+    interface: content
+    target: $SNAP/lib/gtk-2.0
+    default-provider: gtk2-common-themes:gtk-2-engines
+  gtk-2-themes:
+    interface: content
+    target: $SNAP/usr/share/themes
+    default-provider: gtk2-common-themes:gtk-2-themes
+
+environment:
+  XDG_DATA_DIRS: $SNAP/usr/share:$XDG_DATA_DIRS
+  GTK_PATH: $SNAP/lib/gtk-2.0
+
+apps:
+  p65pas:
+    command: usr/bin/P65Pas-linux
+    command-chain:
+    - bin/desktop-launch
+    desktop: usr/share/applications/P65Pas.desktop
+    plugs:
+    - desktop
+    - x11
+    - home
+
+layout:
+  /usr/share/P65Pas:
+    bind: $SNAP/usr/share/P65Pas
